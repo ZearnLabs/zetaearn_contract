@@ -1,0 +1,11 @@
+{
+  "devDependencies": {
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.10",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@openzeppelin/contracts-upgradeable": "4.8",
+    "@openzeppelin/hardhat-upgrades": "^3.0.1",
+    "bech32": "^2.0.0",
+    "dotenv": "^16.3.1",
+    "hardhat": "^2.19.3"
+  }
+}
