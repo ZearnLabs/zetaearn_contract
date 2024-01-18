@@ -229,7 +229,7 @@ contract ValidatorOperator is
 
     /// @notice get update version each time
     function getUpdateVersion() external pure override returns(string memory) {
-        return "1.0.2.3";
+        return "1.0.2.6";
     }
 
     /// @notice get finished unbond epoch amount

@@ -844,7 +844,7 @@ contract StZETA is
 
     /// @notice Get the version of each update
     function getUpdateVersion() external pure override returns(string memory) {
-        return "1.0.2.5";
+        return "1.0.2.6";
     }
 
     /// @notice claim multi tokens
@@ -907,7 +907,7 @@ contract StZETA is
         // Check if the transfer is successful
         _require(success, "Transfer failed");
         // Emit the ClaimTokensEvent event
-        emit ClaimTokensEvent(msg.sender, _tokenId, amountToClaim);
+        emit ClaimTokensEvent(msg.sender, _tokenId, amountToClaim, balanceOf(msg.sender));
 
         return amountToClaim;
     }

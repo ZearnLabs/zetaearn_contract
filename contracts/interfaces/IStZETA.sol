@@ -399,9 +399,11 @@ interface IStZETA is IERC20Upgradeable {
     /// @param _from msg.sender
     /// @param _id token id
     /// @param _amountClaimed amount Claimed
+    /// @param _balanceOfStZETA balance of stZETA
     event ClaimTokensEvent(
         address indexed _from,
         uint256 indexed _id,
-        uint256 indexed _amountClaimed
+        uint256 indexed _amountClaimed,
+        uint256 _balanceOfStZETA
     );
 }

@@ -189,7 +189,7 @@ contract NodeOperatorRegistry is
 
     /// @notice Get update version on each update
     function getUpdateVersion() external pure override returns(string memory) {
-        return "1.0.2.3";
+        return "1.0.2.6";
     }
 
     ////////////////////////////////////////////////////////////

@@ -41,4 +41,9 @@ interface IUnStZETA is IERC721Upgradeable {
     /// @notice get update version
     function getUpdateVersion() external pure returns(string memory);
 
+    /// @notice check tokenid exists
+    /// @param _tokenId token id.
+    /// @return result return result
+    function exists(uint256 _tokenId) external view returns (bool);
+
 }

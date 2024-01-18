@@ -272,21 +272,20 @@ contract UnStZETA is
     }
 
     /**
-     * @dev See {IERC721Metadata-tokenURI}.
+     * @dev Base URI for computing {tokenURI}. If set, the resulting URI for each
+     * token will be the concatenation of the `baseURI` and the `tokenId`. Empty
+     * by default, can be overridden in child contracts.
      */
-    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
-        _requireMinted(tokenId);
-        // Query the current epoch.
-        uint256 currentEpoch = IStZETA(stZETA).currentEpoch();
-        // Query the epoch of this tokenId.
-        uint256 tokenIdEpoch = IStZETA(stZETA).getTokenIdEpoch(tokenId);
-
-        return tokenIdEpoch <= currentEpoch ? "https://src.zetaearn.com/nft/nft_completed.json" : "https://src.zetaearn.com/nft/nft_pending.json";
+    function _baseURI() internal pure override returns (string memory) {
+        return "https://zeta-server.zetaearn.com/tokens/";
     }
 
     /// @notice Get the version for each update.
     function getUpdateVersion() external pure override returns(string memory) {
-        return "1.0.2.3";
+        return "1.0.2.7";
     }
 
+    function exists(uint256 tokenId) public view override returns (bool) {
+        return _exists(tokenId);
+    }
 }
