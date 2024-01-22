@@ -12,13 +12,13 @@ interface IValidatorOperator {
         WITHDRAWTOTAL
     }
 
-    /// @notice node operator version
+    /// @notice version
     function version() external view returns (string memory);
 
-    /// @notice node operator ratio weight
+    /// @notice ratio weight
     function ratio() external view returns (uint256);
 
-    /// @notice get validator operator status
+    /// @notice get status
     function status() external view returns (NodeOperatorRegistryStatus);
 
     /// @notice get dao address
@@ -49,16 +49,18 @@ interface IValidatorOperator {
     /// @param _delegateAddress validator operator delegation address
     /// @param _rewardAddress validator operator reward address
     /// @param _commissionRate validator operator commission rate
+    /// @param _nodeOperatorRegistry node operator registry address
     function initialize(
         address _dao,
         address _oracle,
         address _stZETA,
         address _delegateAddress,
         address _rewardAddress,
-        uint16 _commissionRate
+        uint16 _commissionRate,
+        address _nodeOperatorRegistry
     ) external;
 
-    /// @notice occur when node exit, wait oracle withdraw all stake and reward
+    /// @notice when node exit, wait oracle process
     function withdrawTotalDelegated() external;
 
     /// @notice to delegate
@@ -105,7 +107,7 @@ interface IValidatorOperator {
     function setCommissionRate(uint16 _newCommissionRate) external;
 
     /// @notice to unstake, update validator unbond info
-    /// @param claimAmount unstake amount
+    /// @param claimAmount claim amount
     function unStake(uint256 claimAmount) external;
 
     // unbond data structure
@@ -125,22 +127,6 @@ interface IValidatorOperator {
     /// @return unbond unbond info
     function getDelegatorUnbond(address user, uint256 unbondNonce) external view returns (DelegatorUnbond memory);
 
-    /// @notice get epoch unbond nonces
-    /// @param epoch epoch
-    /// @return unbond nonces
-    function getUnbondEpochsNonces(uint256 epoch) external view returns (uint256[] memory);
-
-    /// @notice get epoch finished unbond nonces
-    /// @param epoch epoch
-    /// @return unbond nonces
-    function getFinishedUnbondEpochsNonces(uint256 epoch) external view returns (uint256[] memory);
-
-    /// @notice insert epoch nonce.
-    /// @notice only ORACLE can call this function.
-    /// @param epoch - finished epoch.
-    /// @param nonce - finished nonce.
-    function pushFinishedUnbondEpochsNonces(uint256 epoch, uint256 nonce) external;
-
     /// @notice oracle reward add to total stake
     /// @param rewardAmount reward amount
     function addOracleReward(uint256 rewardAmount) external;
@@ -158,29 +144,28 @@ interface IValidatorOperator {
     /// @param _target_epoch target epoch
     function setNoncesEpoch(address _user, uint256[] memory _unbondNonces, uint256 _target_epoch) external;
 
-    /// @notice get last finished unbond epoch amount
+    /// @notice get epoch unbond amount
     /// @param epoch epoch
     /// @return unbond epoch
     function getfinishedUnbondEpochAmount(uint256 epoch) external view returns (uint256);
 
-    /// @notice receive finished unbond call
+    /// @notice finished unbond call
     /// @param delegator_address delegator address
     /// @param epoch epoch
     /// @param blockHeight block height
-    /// only oracle can call this function
     function finishUnbond(
         address delegator_address,
         uint256 epoch,
         uint256 blockHeight
     ) external payable;
 
-    /// @notice get total recieved unbond amount
+    /// @notice get total unbond amount
     function totalUnbondAmount() external view returns (uint256);
 
     /// @notice get last finished unbond epoch
     function lastEpochFinishedUnbond() external view returns (uint256);
 
-    /// @notice let stZETA to run unstake claim
+    /// @notice unstake claim
     /// @param unbondNonce unbond nonce
     /// @return claim amount
     function unstakeClaimTokens(uint256 unbondNonce) external returns(uint256);
@@ -189,8 +174,18 @@ interface IValidatorOperator {
     /// @param _totalUnbondAmount total unbond amount
     function setTotalUnbondAmount(uint256 _totalUnbondAmount) external;
 
+    /// @notice set finished unbond epoch amount
+    /// @param _epoch epoch
+    /// @param _amount amount
     function setFinishedUnbondEpochAmount(uint256 _epoch, uint256 _amount) external;
+
+    /// @notice get NodeOperatorRegistry address
+    function nodeOperatorRegistry() external view returns (address);
     
+    /// @notice set new NodeOperatorRegistry address
+    /// @param _newNodeOperatorRegistry new NodeOperatorRegistry address
+    function setNodeOperatorRegistry(address _newNodeOperatorRegistry) external;
+
     ////////////////////////////////////////////////////////////
     /////                                                    ///
     /////                    EVENTS                          ///
@@ -263,28 +258,46 @@ interface IValidatorOperator {
     /// @param totalStake rest total stake.
     event UnStake(uint256 indexed currentEpoch, uint256 indexed claimAmount, uint256 indexed unbondNonce, uint256 totalStake);
 
-    /// @notice push new finished unbond nonce emit
-    /// @param epoch current epoch.
-    /// @param unbondNonce unstake nonce.
-    event PushFinishedUnbondEpochsNonces(uint256 indexed epoch, uint256 indexed unbondNonce);
-
-    /// @notice add new reward emit
+    /// @notice add new oracle reward emit
     /// @param reward reward.
     /// @param newTotalStake new totalStake.
     event AddOracleReward(uint256 indexed reward, uint256 indexed newTotalStake);
 
-    /// @notice sub punish emit
+    /// @notice sub oracle punish emit
     /// @param punishAmount punishAmount.
     /// @param newTotalStake new totalStake.
     event SubOracleReward(uint256 indexed punishAmount, uint256 indexed newTotalStake);
 
+    /// @notice set new nonces epoch emit
+    /// @param user user address.
+    /// @param epoch epoch.
+    /// @param nonces nonces.
     event SetNoncesEpoch(address indexed user, uint256 indexed epoch, uint256[] nonces);
 
+    /// @notice finish unbond emit
+    /// @param amount amount.
+    /// @param epoch epoch.
+    /// @param blockHeight blockHeight.
+    /// @param delegator_address delegator_address.
+    /// @param totalUnbondAmount totalUnbondAmount.
     event FinishUnbond(
         uint256 indexed amount, uint256 indexed epoch, uint256 indexed blockHeight,
         address delegator_address, uint256 totalUnbondAmount);
 
+    /// @notice set total unbond amount emit
+    /// @param oldTotalUnbondAmount oldTotalUnbondAmount.
+    /// @param newTotalUnbondAmount newTotalUnbondAmount.
     event SetTotalUnbondAmount(uint256 indexed oldTotalUnbondAmount, uint256 indexed newTotalUnbondAmount);
 
+    /// @notice set finished unbond epoch amount emit
+    /// @param epoch epoch.
+    /// @param oldAmount oldAmount.
+    /// @param newAmount newAmount.
     event SetFinishedUnbondEpochAmount(uint256 indexed epoch, uint256 indexed oldAmount, uint256 indexed newAmount);
+
+    /// @notice set new NodeOperatorRegistry address
+    /// @param oldNodeOperatorRegistry old NodeOperatorRegistry address.
+    /// @param newNodeOperatorRegistry new NodeOperatorRegistry address.
+    event SetNodeOperatorRegistry(address oldNodeOperatorRegistry, address newNodeOperatorRegistry);
+
 }

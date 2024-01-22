@@ -7,7 +7,7 @@ import "./INodeOperatorRegistry.sol";
 import "./IUnStZETA.sol";
 
 interface IStZETA is IERC20Upgradeable {
-    /// @notice fee distribution struct.
+    /// @notice fee distribution struct. Not Use Now.
     /// @param dao dao fee.
     /// @param operators operators fee.
     /// @param insurance insurance fee.
@@ -17,7 +17,7 @@ interface IStZETA is IERC20Upgradeable {
         uint8 insurance;
     }
 
-    /// @notice fee distribution. 
+    /// @notice get fees. 
     /// @return dao dao fee.
     /// @return operators operators fee.
     /// @return insurance insurance fee.
@@ -35,61 +35,79 @@ interface IStZETA is IERC20Upgradeable {
     /// @return oracle oracle address
     function oracle() external view returns (address);
 
-    /// @notice insurance address
+    /// @notice insurance address. Not Use Now.
     /// @return insurance insurance address
     function insurance() external view returns (address);
 
     /// @notice Node operator registry interface.
+    /// @return nodeOperatorRegistry Node operator registry interface.
     function nodeOperatorRegistry() external view returns (INodeOperatorRegistry);
 
     /// @notice Total amount of buffered Zeta in the contract.
+    /// @return amount Total amount of buffered
     function totalBuffered() external view returns (uint256);
 
-    /// @notice Reserved funds measured in Zeta.
+    /// @notice Reserved funds.
+    /// @return amount Reserved funds.
     function reservedFunds() external view returns (uint256);
 
     /// @notice DAO role.
+    /// @return bytes role bytes
     function DAO() external view returns (bytes32);
 
     /// @notice PAUSE_ROLE role.
+    /// @return bytes role bytes
     function PAUSE_ROLE() external view returns (bytes32);
 
     /// @notice UNPAUSE_ROLE role.
+    /// @return bytes role bytes
     function UNPAUSE_ROLE() external view returns (bytes32);
 
     /// @notice Protocol fee.
+    /// @return amount Protocol fee.
     function protocolFee() external view returns (uint8);
 
     /// @notice Submit threshold
+    /// @return threshold Submit threshold
     function submitThreshold() external view returns (uint256);
 
     /// @notice Total number of unique stakers ever
+    /// @return amount stakers number
     function totalStakers() external view returns (uint256);
 
     /// @notice Daily APR for the day, reserved to 2 decimal places as a percentage, total of 5 digits  
+    /// @return apr APR.
     function apr() external view returns (uint16);
 
     /// @notice Delegation lower bound.
+    /// @return amount Delegation lower bound.
     function delegationLowerBound() external view returns (uint256);
 
-    /// @notice Total staked Zeta in this contract.
+    /// @notice Total staked.
+    /// @return amount Total staked.
     function totalStaked() external view returns (uint256);
 
-    /// @notice All current stakers in this contract.
+    /// @notice check address if staked ever.
+    /// @param _from address to check.
+    /// @return result if staked ever.
     function stakers(address _from) external view returns (bool);
 
     /// @notice Max submit threshold.
+    /// @return threshold Max submit threshold.
     function submitMaxThreshold() external view returns (uint256);
 
     /// @notice UnStZETA interface
+    /// @return unStZETA UnStZETA interface
     function unStZETA() external view returns (IUnStZETA);
 
     /// @notice Current epoch
+    /// @return epoch Current epoch
     function currentEpoch() external view returns (uint256);
 
     /// @notice Epoch delay period
     function epochDelay() external view returns (uint256);
 
+    /// @notice initialize function
     /// @param _dao - DAO address
     /// @param _insurance - Insurance address
     /// @param _oracle - Oracle address
@@ -105,12 +123,12 @@ interface IStZETA is IERC20Upgradeable {
         uint256 _currentEpoch
     ) external;
 
-    /// @notice Send funds to the StZETA contract and mint StZETA to msg.sender
-    /// @return Amount of StZETA minted
+    /// @notice Send funds to the StZETA contract and mint StZETA
+    /// @return Amount minted
     function submit() external payable returns (uint256);
 
-    /// @notice Function to calculate total pooled ZETA
-    /// @return Total pooled ZETA
+    /// @notice Function to calculate total pooled
+    /// @return Total pooled
     function getTotalPooledZETA() external view returns (uint256);
 
     /// @notice Function to convert any ZETA to stZETA
@@ -141,7 +159,7 @@ interface IStZETA is IERC20Upgradeable {
             uint256 totalPooledZETA
         );
         
-    /// @notice Allow setting fees.
+    /// @notice set fees.
     /// @param _daoFee the new daoFee
     /// @param _operatorsFee the new operatorsFee
     /// @param _insuranceFee the new insuranceFee
@@ -179,35 +197,34 @@ interface IStZETA is IERC20Upgradeable {
     /// @param _newApr new apr.
     function setApr(uint16 _newApr) external;
 
-    /// @notice Calculate total pending amount across all NFTs owned by stZETA contract.
-    /// @return pendingBufferedTokens Total pending amount of stZETA.
+    /// @notice Calculate pending amount
+    /// @return pendingBufferedTokens Total pending amoun
     function calculatePendingBufferedTokens() external view returns(uint256);
 
     /// @notice This will be included in cron job
-    /// @notice Delegate tokens to validator share contract
     function delegate() external;
 
     /// @notice Allow setting new delegationLowerBound.
     /// @param _delegationLowerBound new delegationLowerBound.
     function setDelegationLowerBound(uint256 _delegationLowerBound) external;
 
-    /// @notice Allow setting newNodeOperatorRegistryAddress.
-    /// @param _newNodeOperatorRegistry new NodeOperatorRegistryAddress.
-    function setNodeOperatorRegistryAddress(address _newNodeOperatorRegistry) external;
+    /// @notice Allow setting newNodeOperatorRegistry.
+    /// @param _newNodeOperatorRegistryAddress new NodeOperatorRegistryAddress.
+    function setNodeOperatorRegistry(address _newNodeOperatorRegistryAddress) external;
 
     /// @notice Allow setting new submit max threshold.
     /// @param _newSubmitMaxThreshold new submit threshold.
     function setSubmitMaxThreshold(uint256 _newSubmitMaxThreshold) external;
     
     /// @notice Allow setting new UnStZETA.
-    /// @param _UnStZETA new UnStZETA.
-    function setUnStZETA(address _UnStZETA) external;
+    /// @param _newUnStZETAAddress new UnStZETA address.
+    function setUnStZETA(address _newUnStZETAAddress) external;
 
     /// @notice Request withdraw struct.
     /// @param amount2WithdrawFromStZETA Amount in ZETA.
     /// @param validatorNonce Validator nonce.
     /// @param requestEpoch Epoch at request.
-    /// @param validatorAddress Validator shared address.
+    /// @param validatorAddress Validator address.
     struct RequestWithdraw {
         uint256 amount2WithdrawFromStZETA;
         uint256 validatorNonce;
@@ -220,7 +237,7 @@ interface IStZETA is IERC20Upgradeable {
     /// @param tokenId Token id.
     /// @param validatorNonce Validator nonce.  
     /// @param requestEpoch Epoch at request.
-    /// @param validatorAddress Validator shared address.
+    /// @param validatorAddress Validator address.
     struct RequestWithdrawQuery {
         uint256 amount;
         uint256 tokenId;
@@ -229,7 +246,7 @@ interface IStZETA is IERC20Upgradeable {
         address validatorAddress;
     }
 
-    /// @notice Store user withdraw request in RequestWithdraw struct
+    /// @notice user request withdraws.
     /// @param _amount - Amount of StZETA to request withdraw
     /// @return NFT token id
     function requestWithdraw(uint256 _amount) external returns (uint256);
@@ -244,28 +261,29 @@ interface IStZETA is IERC20Upgradeable {
     
     /// @notice Get tokenIds for a given epoch
     /// @param epoch epoch
-    /// @return tokenIds
+    /// @return tokenIds tokenIds list
     function getEpochsTokenIds(uint256 epoch) external view returns (uint256[] memory);
 
     /// @notice Get all requestWithdraws for a given epoch
     /// @param epoch epoch
-    /// @return requestWithdrawsQuery list
+    /// @return requestWithdrawQuerys requestWithdrawsQuery list
     function getEpochsRequestWithdraws(uint256 epoch) external view returns (RequestWithdrawQuery[] memory);
 
-    //// @notice Get all requestWithdraws for a given address
+    //// @notice Get all requestWithdraws
     /// @param target_address Target address
-    /// @return List of requestWithdraws
+    /// @return requestWithdrawQuerys List of requestWithdraws
     function getAddressRequestWithdraws(address target_address) external view returns (RequestWithdrawQuery[] memory);
 
     /// @notice Get epoch for a given tokenId
     /// @param tokenId Token id
-    /// @return Epoch
+    /// @return epoch Epoch
     function getTokenIdEpoch(uint256 tokenId) external view returns (uint256);
 
     /// @notice Get update version on each update
+    /// @return version Version
     function getUpdateVersion() external pure returns(string memory);
 
-    /// @notice Correct epoch for a list of tokenIds
+    /// @notice set tokenIds epoch
     /// @param tokenIds List of token ids
     /// @param targetEpoch Target epoch
     function setTokenIdsEpoch(uint256[] memory tokenIds, uint256 targetEpoch) external;
@@ -275,10 +293,11 @@ interface IStZETA is IERC20Upgradeable {
 
     /// @notice Claim tokens.
     /// @param _tokenIds Token ids.
-    /// @return Amount claimed.
+    /// @return totalAmountToClaim Amount claimed.
     function claimMultiTokens(uint256[] memory _tokenIds) external returns(uint256);
 
-    /// @notice get the valid last epoch tokenId
+    /// @notice get the valid last epoch
+    /// @return epoch Epoch
     function getValidEpoch() external view returns(uint256);
 
     ////////////////////////////////////////////////////////////
@@ -288,7 +307,7 @@ interface IStZETA is IERC20Upgradeable {
     ////////////////////////////////////////////////////////////
 
     /// @notice Emitted on submit.
-    /// @param _from msg.sender.
+    /// @param _from from address.
     /// @param _amount Amount.
     /// @param _balanceOfStZETA Balance of stZETA.
     event SubmitEvent(address indexed _from, uint256 indexed _amount, uint256 indexed _balanceOfStZETA);
@@ -297,18 +316,10 @@ interface IStZETA is IERC20Upgradeable {
     /// @param _newInsuranceAddress the new InsuranceAddress.
     event SetInsuranceAddress(address indexed _newInsuranceAddress);
 
-    /// @notice Emitted when new NodeOperatorRegistryAddress is set.
+    /// @notice Emitted when new NodeOperatorRegistry is set.
     /// @param _newNodeOperatorRegistryAddress the new NodeOperatorRegistryAddress.
-    event SetNodeOperatorRegistryAddress(
+    event SetNodeOperatorRegistry(
         address indexed _newNodeOperatorRegistryAddress
-    );
-
-    /// @notice Emitted when new RewardDistributionLowerBound is set.
-    /// @param oldRewardDistributionLowerBound the old RewardDistributionLowerBound.
-    /// @param newRewardDistributionLowerBound the new RewardDistributionLowerBound.
-    event SetRewardDistributionLowerBound(
-        uint256 oldRewardDistributionLowerBound,
-        uint256 newRewardDistributionLowerBound
     );
 
     /// @notice Emitted when new DAO is set.
@@ -335,7 +346,7 @@ interface IStZETA is IERC20Upgradeable {
     /// @notice Emitted when version is set.
     /// @param oldVersion old.
     /// @param newVersion new.
-    event Version(string oldVersion, string indexed newVersion);
+    event SetVersion(string oldVersion, string indexed newVersion);
 
     /// @notice Emitted when new submit threshold is set.
     /// @param oldSubmitThreshold old.
@@ -361,9 +372,9 @@ interface IStZETA is IERC20Upgradeable {
     /// @param newSubmitMaxThreshold new.
     event SetSubmitMaxThreshold(uint256 oldSubmitMaxThreshold, uint256 indexed newSubmitMaxThreshold);
 
-    /// @notice Emitted when new UnStZETAAddress is set.
+    /// @notice Emitted when new UnStZETA is set.
     /// @param _newUnStZETAAddress the new UnStZETAAddress.
-    event SetUnStZETAAddress(address indexed _newUnStZETAAddress);
+    event SetUnStZETA(address indexed _newUnStZETAAddress);
 
     /// @notice Emitted when new current epoch is set.
     /// @param oldCurrentEpoch old.
@@ -376,7 +387,7 @@ interface IStZETA is IERC20Upgradeable {
     event SetEpochDelay( uint256 oldEpochDelay, uint256 indexed newEpochDelay);
 
     /// @notice Emitted on request withdraw.
-    /// @param _from msg.sender.
+    /// @param _from from address.
     /// @param _amount amount.
     /// @param tokenId tokenId.
     /// @param _balanceOfStZETA Balance of stZETA.
@@ -388,7 +399,7 @@ interface IStZETA is IERC20Upgradeable {
     event SetTokenIdsEpoch(uint256[] tokenIds, uint256 indexed targetEpoch);
 
     /// @notice Emitted on receiving ZETA.
-    /// @param _from msg.sender.
+    /// @param _from from address.
     /// @param _amount amount.
     event ReceiveZETAEvent(
         address indexed _from,
@@ -396,7 +407,7 @@ interface IStZETA is IERC20Upgradeable {
     );
 
     /// @notice ClaimTokens emit
-    /// @param _from msg.sender
+    /// @param _from from address
     /// @param _id token id
     /// @param _amountClaimed amount Claimed
     /// @param _balanceOfStZETA balance of stZETA

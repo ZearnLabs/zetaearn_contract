@@ -11,7 +11,7 @@ interface INodeOperatorRegistry {
     /// @param delegateAddress validator delegation address
     /// @param rewardAddress validator reward address
     /// @param delegation delegation
-    /// @param status validator stake manager status
+    /// @param status validator status
     struct FullNodeOperatorRegistry {
         address operatorAddress;
         uint256 commissionRate;
@@ -22,7 +22,7 @@ interface INodeOperatorRegistry {
     }
 
     /// @notice node operator data structure
-    /// @param operatorAddress validator validator operator address
+    /// @param operatorAddress validator operator address
     /// @param delegateAddress validator delegation address
     /// @param rewardAddress validator reward address
     struct ValidatorData {
@@ -35,27 +35,21 @@ interface INodeOperatorRegistry {
     function dao() external view returns (address);
 
     /// @notice add new node operator
-    /// only dao can call this function
-    /// @param operatorAddress validator validator operator address
+    /// @param operatorAddress validator operator address
     function addNodeOperator(address operatorAddress) external;
 
     /// @notice quit node operator registry
-    /// only node operator owner can call this function
     function exitNodeOperatorRegistry() external;
 
     /// @notice remove a node operator and update state, let oracle take all delegated tokens
-    /// only dao can call this function
-    /// @param operatorAddress validator validator operator address
+    /// @param operatorAddress validator operator address
     function removeNodeOperator(address operatorAddress) external;
 
     /// @notice if node operator is invalid, then remove
-    /// 1. if node operator commission lower than commission
-    /// 2. if node operator is Unstaked or Ejected
-    /// @param operatorAddress validator validator operator address
+    /// @param operatorAddress validator operator address
     function removeInvalidNodeOperator(address operatorAddress) external;
 
     /// @notice update node operator reward address
-    /// only node operator owner can call this function 
     /// @param newRewardAddress new reward address
     function setRewardAddress(address newRewardAddress) external;
 
@@ -63,22 +57,21 @@ interface INodeOperatorRegistry {
     /// @param _newVersion new version
     function setVersion(string memory _newVersion) external;
 
-    /// @notice list stakeManager all ACTIVE operators
-    /// @return activeNodeOperators a ACTIVE node operator list
+    /// @notice list can delegated operators
+    /// @return activeNodeOperators node operator list
     function listDelegatedNodeOperators()
         external
         view
         returns (ValidatorData[] memory);
 
-    /// @notice list stakeManager all can withdraw operators, include ACTIVE, JAILED, and UNSTAKED operators
-    /// @return nodeOperators a ACTIVE, JAILED or UNSTAKED node operator list
+    /// @notice list all can withdraw operators
+    /// @return nodeOperators node operator list
     function listWithdrawNodeOperators()
         external
         view
         returns (ValidatorData[] memory);
 
-    /// @notice calculate total buffered distribute between active validators, depend on if system is balanced
-    /// if validators is EJECTED or UNSTAKED, the function will revert
+    /// @notice calculate total delegation distribute between active validators, 
     /// @return validators all active node operators
     /// @return stakePerOperator stake amount per operator
     /// @return operatorRatios ratio per operator
@@ -95,15 +88,15 @@ interface INodeOperatorRegistry {
             uint256 totalStaked
         );
 
-    /// @notice return a node operator
-    /// @param operatorAddress validator validator operator address
+    /// @notice return a node operator by operator address
+    /// @param operatorAddress validator operator address
     /// @return nodeOperator a node operator
     function getNodeOperatorByOperatorAddress(address operatorAddress)
         external
         view
         returns (FullNodeOperatorRegistry memory nodeOperator);
 
-    /// @notice return a node operator
+    /// @notice return a node operator by reward address
     /// @param rewardAddress reward address
     /// @return nodeOperator a node operator
     function getNodeOperatorByRewardAddress(address rewardAddress)
@@ -122,13 +115,13 @@ interface INodeOperatorRegistry {
     /// @notice return all operatorAddress list
     function getOperatorAddresses() external view returns (address[] memory);
 
-    /// @notice calculate validators if can withdraw, depend on system balance
+    /// @notice calculate validators if can withdraw
     /// @param _withdrawAmount can withdrawed amount
-    /// @return validators all node operators
+    /// @return validators all validators
     /// @return totalDelegated total delegated amount
-    /// @return bigNodeOperatorAddresses store delegated amount larger than delegation node operator Addresses
-    /// @return smallNodeOperatorAddresses store delegated amount lower than delegation node operator Addresses
-    /// @return operatorAmountCanBeRequested when unbalance, amount can withdraw from validator
+    /// @return bigNodeOperatorAddresses TODO Addresses of node operators with delegation above average 
+    /// @return smallNodeOperatorAddresses TODO Addresses of node operators with delegation below average
+    /// @return operatorAmountCanBeRequested TODO Amount that can be requested from specific validator if system imbalanced
     /// @return totalValidatorToWithdrawFrom when balance, amount can withdraw validator
     /// @return minStakeAmount when balance, validator smallest stake amount
     function getValidatorsRequestWithdraw(uint256 _withdrawAmount)

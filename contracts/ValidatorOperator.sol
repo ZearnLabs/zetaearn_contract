@@ -50,15 +50,11 @@ contract ValidatorOperator is
     /// @notice validator operator commission rate, max is 10000, 100%, need divide 100
     uint16 public override commissionRate;
 
-    // -------------------------------------
-    // after staking slot
-    // -------------------------------------
-    
     /// @notice record unbond nonce
     mapping(address => uint256) public unbondNonces;
 
     // it is mapping, first key is address, second key is unbondNonce, value is DelegatorUnbond
-    // DelegateUnbond a data structure, include shares and withdrawEpoch
+    // DelegateUnbond a data structure, include amount and withdrawEpoch
     mapping(address => mapping(uint256 => DelegatorUnbond)) public unbonds_new;
 
     /// @notice record epoch unbond nonces. NOT USE NOW
@@ -76,6 +72,9 @@ contract ValidatorOperator is
     /// @notice last epoch finished unbond
     uint256 public override lastEpochFinishedUnbond;
 
+    /// @notice node operator registry address
+    address public override nodeOperatorRegistry;
+
     ////////////////////////////////////////////////////////////
     /////                                                    ///
     /////                   Functions                        ///
@@ -88,6 +87,12 @@ contract ValidatorOperator is
         _;
     }
 
+    /// @notice only node operator registry can call
+    modifier isNodeOperatorRegistry() {
+        require(msg.sender == nodeOperatorRegistry, "not nodeOperatorRegistry");
+        _;
+    }
+
     /// @notice init ValidatorOperator contract
     /// @param _dao dao address
     /// @param _oracle oracle address
@@ -95,13 +100,15 @@ contract ValidatorOperator is
     /// @param _delegateAddress validator operator delegation address
     /// @param _rewardAddress validator operator reward address
     /// @param _commissionRate validator operator commission rate
+    /// @param _nodeOperatorRegistry node operator registry address
     function initialize(
         address _dao,
         address _oracle,
         address _stZETA,
         address _delegateAddress,
         address _rewardAddress,
-        uint16 _commissionRate
+        uint16 _commissionRate,
+        address _nodeOperatorRegistry
     ) external override initializer {
         __Pausable_init_unchained();
         __AccessControl_init_unchained();
@@ -120,6 +127,7 @@ contract ValidatorOperator is
         stZETA = _stZETA;
         delegateAddress = _delegateAddress;
         rewardAddress = _rewardAddress;
+        nodeOperatorRegistry = _nodeOperatorRegistry;
 
         // set commission
         commissionRate = _commissionRate;
@@ -127,12 +135,12 @@ contract ValidatorOperator is
         ratio = 10**10;
         status = NodeOperatorRegistryStatus.ACTIVE;
 
-        version = "1.0.2";
+        version = "1.0.3";
     }
 
-    /// @notice when node quit, wait oracle withdraw all stake and reward
-    function withdrawTotalDelegated() external override isStZETA {
-        // it is only a flag, in the future, we can use other way to mark it
+    /// @notice when node quit, wait oracle process
+    function withdrawTotalDelegated() external override isNodeOperatorRegistry {
+        // change status
         status = NodeOperatorRegistryStatus.WITHDRAWTOTAL;
 
         emit WithdrawTotalDelegated();
@@ -153,12 +161,6 @@ contract ValidatorOperator is
     /// @notice to claim, update validator unbond info
     /// @param claimAmount claim amount
     function unStake(uint256 claimAmount) external override isStZETA {
-        /*
-        1. Perform unstaking, return shares and withdraw pool shares calculated from user withdrawal amount
-        2. Get user unbondNonce, and increase by 1
-        3. Construct a DelegatorUnbond structure, put in withdraw pool shares and current epoch 
-        4. Update user unbonds_new mapping and unbondNonces mapping
-        */
         require(claimAmount > 0, "zero amount");
         require(claimAmount <= totalStake, "exceed totalStake");
         uint256 currentEpoch = IStZETA(stZETA).currentEpoch();
@@ -176,8 +178,6 @@ contract ValidatorOperator is
         unbonds_new[msg.sender][unbondNonce] = unbond;
         // update unbondNonce
         unbondNonces[msg.sender] = unbondNonce;
-        // // update unbondEpochsNonces
-        // unbondEpochsNonces[currentEpoch].push(unbondNonce);
 
         emit UnStake(currentEpoch, claimAmount, unbondNonce, totalStake);
     }
@@ -195,20 +195,6 @@ contract ValidatorOperator is
     /// @return unbond info
     function getDelegatorUnbond(address user, uint256 unbondNonce) external view override returns (DelegatorUnbond memory) {
         return unbonds_new[user][unbondNonce];
-    }
-
-    /// @notice get epoch unbond nonces
-    /// @param epoch epoch
-    /// @return unbond nonces
-    function getUnbondEpochsNonces(uint256 epoch) external view override returns (uint256[] memory) {
-        return unbondEpochsNonces[epoch];
-    }
-
-    /// @notice get epoch finished unbond nonces
-    /// @param epoch epoch
-    /// @return unbond nonces
-    function getFinishedUnbondEpochsNonces(uint256 epoch) external view override returns (uint256[] memory) {
-        return finishedUnbondEpochsNonces[epoch];
     }
 
     /// @notice add oracle reward to total stake
@@ -229,7 +215,7 @@ contract ValidatorOperator is
 
     /// @notice get update version each time
     function getUpdateVersion() external pure override returns(string memory) {
-        return "1.0.2.6";
+        return "1.0.3";
     }
 
     /// @notice get finished unbond epoch amount
@@ -237,7 +223,7 @@ contract ValidatorOperator is
         return finishedUnbondEpochAmount[epoch];
     }
 
-    /// @notice receive finished unbond call
+    /// @notice finished unbond call
     /// @param delegator_address delegator address
     /// @param end_epoch end_epoch
     /// @param blockHeight block height
@@ -266,13 +252,13 @@ contract ValidatorOperator is
             unbondAmount, end_epoch, blockHeight, delegator_address, totalUnbondAmount);
     }
 
-    /// @notice let stZETA to run unstake claim
+    /// @notice unstake claim
     /// @param unbondNonce unbond nonce
-    /// @return claim amount
+    /// @return amount amount
     function unstakeClaimTokens(uint256 unbondNonce) external override isStZETA returns(uint256) {
         // get user unbond info
         DelegatorUnbond memory unbond = unbonds_new[msg.sender][unbondNonce];
-        // according to unbond info to unstake claim, it will transfer amount to user
+        // according to unbond info to unstake claim
         uint256 amount = _unstakeClaimTokens(unbond);
         // delete unbonds_new[msg.sender][unbondNonce];
         delete unbonds_new[msg.sender][unbondNonce];
@@ -288,13 +274,16 @@ contract ValidatorOperator is
         emit SetTotalUnbondAmount(oldTotalUnbondAmount, _totalUnbondAmount);
     }
 
+    /// @notice set finished unbond epoch amount
+    /// @param epoch epoch
+    /// @param amount amount
     function setFinishedUnbondEpochAmount(uint256 epoch, uint256 amount) external override onlyRole(ORACLE_ROLE) {
         uint256 oldAmount = finishedUnbondEpochAmount[epoch];
         finishedUnbondEpochAmount[epoch] = amount;
         emit SetFinishedUnbondEpochAmount(epoch, oldAmount, amount);
     }
 
-    /// @notice according to unbond info to unstake claim, it will transfer amount to user
+    /// @notice according to unbond info to unstake claim
     function _unstakeClaimTokens(DelegatorUnbond memory unbond) private returns(uint256) {
         // get user unbond amount
         uint256 amount = unbond.amount;
@@ -358,11 +347,11 @@ contract ValidatorOperator is
 
     /// @notice Set new DAO address
     /// @notice Only DAO role can call this function
-    /// @param _newDAO - New DAO address
-    function setDao(address _newDAO) external override onlyRole(DAO_ROLE) {
-        address oldDAO = dao;
-        dao = _newDAO;
-        emit SetDao(oldDAO, _newDAO);
+    /// @param _newDao - New DAO address
+    function setDao(address _newDao) external override onlyRole(DAO_ROLE) {
+        address oldDao = dao;
+        dao = _newDao;
+        emit SetDao(oldDao, _newDao);
     }
 
     /// @notice Set new oracle address
@@ -450,19 +439,6 @@ contract ValidatorOperator is
         emit SetNoncesEpoch(_user, _target_epoch, _unbondNonces);
     }
 
-
-    /// @notice Insert finished epoch nonce
-    /// @notice Only ORACLE role can call this function
-    /// @param epoch - Finished epoch
-    /// @param nonce - Finished nonce
-    function pushFinishedUnbondEpochsNonces(uint256 epoch, uint256 nonce)
-        external
-        override
-        onlyRole(ORACLE_ROLE) {
-        finishedUnbondEpochsNonces[epoch].push(nonce);
-        emit PushFinishedUnbondEpochsNonces(epoch, nonce);
-    }
-
     /// @notice Pause contract
     function pause() external onlyRole(PAUSE_ROLE) {
         _pause();
@@ -471,6 +447,18 @@ contract ValidatorOperator is
     /// @notice Unpause contract
     function unpause() external onlyRole(UNPAUSE_ROLE) {
         _unpause();
+    }
+
+    /// @notice Set new NodeOperatorRegistry address
+    /// @notice Only DAO role can call this function
+    /// @param _newNodeOperatorRegistry - New NodeOperatorRegistry address
+    function setNodeOperatorRegistry(address _newNodeOperatorRegistry)
+        external
+        override
+        onlyRole(DAO_ROLE) {
+        address oldNodeOperatorRegistry = nodeOperatorRegistry;
+        nodeOperatorRegistry = _newNodeOperatorRegistry;
+        emit SetNodeOperatorRegistry(oldNodeOperatorRegistry, _newNodeOperatorRegistry);
     }
 
 }

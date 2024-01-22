@@ -26,15 +26,13 @@ contract UnStZETA is
     /// @notice Map addresses to owned token arrays.
     mapping(address => uint256[]) public owner2Tokens;
 
-    /// @notice TokenId exists only in one of these arrays since a token can only be owned by one address at a time.
-    /// This mapping stores the index of tokenId in one of these arrays.
+    /// @notice token to index.
     mapping(uint256 => uint256) public token2Index;
 
     /// @notice Map addresses to approved token arrays.
     mapping(address => uint256[]) public address2Approved;
 
-    /// @notice TokenId exists only in one of these arrays since a token can only be approved to one address at a time.
-    /// This mapping stores the index of tokenId in one of these arrays.
+    /// @notice TokenId to approved index.
     mapping(uint256 => uint256) public tokenId2ApprovedIndex;
 
     /// @notice Modifier that can only be called by the stZETA contract.
@@ -55,18 +53,18 @@ contract UnStZETA is
         // Set stZETA contract address.
         stZETA = _stZETA;
         // Set version.
-        version = "1.0.2";
+        version = "1.0.3";
     }
 
-    /// @notice Increase token supply and mint token based on the index.
-    /// @param _to - Address that will own the minted token.
+    /// @notice mint a new NFT.
+    /// @param _to - to address.
     /// @return Index of the minted token.
     function mint(address _to) external override isStZETA returns (uint256) {
         _mint(_to, ++tokenIdIndex);
         return tokenIdIndex;
     }
 
-    /// @notice Burn the token with the specified _tokenId.
+    /// @notice Burn NFT.
     /// @param _tokenId - ID of the token to be burned.
     function burn(uint256 _tokenId) external override isStZETA {
         _burn(_tokenId);
@@ -74,7 +72,7 @@ contract UnStZETA is
 
     /// @notice Override the approve function.
     /// @param _to - Address to approve the token to.
-    /// @param _tokenId - ID of the token to be approved to _to.
+    /// @param _tokenId - ID of the token to be approved.
     function approve(address _to, uint256 _tokenId)
         public
         override(ERC721Upgradeable, IERC721Upgradeable) {
@@ -93,9 +91,9 @@ contract UnStZETA is
         tokenId2ApprovedIndex[_tokenId] = approvedTokens.length - 1;
     }
 
-    /// @notice TODO: Override _beforeTokenTransfer.
-    /// @param from - Owner of the token.
-    /// @param to - Receiver of the token.
+    /// @notice Override _beforeTokenTransfer.
+    /// @param from - from address.
+    /// @param to - to address.
     /// @param tokenId - ID of the token.
     function _beforeTokenTransfer(
         address from,
@@ -114,34 +112,31 @@ contract UnStZETA is
 
         // Minting
         if (from == address(0)) {
-            // Get the owner's token array.
+            // Get the owner's token.
             uint256[] storage ownerTokens = owner2Tokens[to];
-            // Add the token to the owner's token array.
+            // Add the token to the owner's token.
             ownerTokens.push(tokenId);
             token2Index[tokenId] = ownerTokens.length - 1;
         }
         // Burning
         else if (to == address(0)) {
-            // Get the owner's token array.
+            // Get the owner's token.
             uint256[] storage ownerTokens = owner2Tokens[from];
-            // Get the length of the owner's token array.
+            // Get the length of the owner's token.
             uint256 ownerTokensLength = ownerTokens.length;
-            // Get the index of the token in the owner's token array.
+            // Get the index of the token in the owner's token.
             uint256 burnedTokenIndexInOwnerTokens = token2Index[tokenId];
-            // Get the index of the last token in the owner's token array.
+            // Get the index of the last token in the owner's token.
             uint256 lastOwnerTokensIndex = ownerTokensLength - 1;
-            // If the token to be burned is not the last token in the owner's token array.
+            // If the token to be burned is not the last token in the owner's token.
             if (
                 burnedTokenIndexInOwnerTokens != lastOwnerTokensIndex &&
                 ownerTokensLength != 1
             ) {
                 uint256 lastOwnerTokenId = ownerTokens[lastOwnerTokensIndex];
-                // Make the last token have the index of the token we want to burn.
-                // So when we request the index of the token with the id of the current last token in ownerTokens,
-                // it doesn't point to the last slot in ownerTokens, but to the slot of the burned token (which we will update in the next line).
+                // update token to index.
                 token2Index[lastOwnerTokenId] = burnedTokenIndexInOwnerTokens;
-                // Copy the current last token to the position of the token we want to burn.
-                // So the pointer updated in tokenId2Index points to the slot with the correct value.
+                // update owner token.
                 ownerTokens[burnedTokenIndexInOwnerTokens] = lastOwnerTokenId;
             }
             ownerTokens.pop();
@@ -173,12 +168,9 @@ contract UnStZETA is
                 ownerTokensLength != 1
             ) {
                 uint256 lastOwnerTokenId = senderTokens[lastOwnerTokensIndex];
-                // Make the last token have the index of the token we want to burn.
-                // So when we request the index of the token with the id of the current last token in ownerTokens,
-                // it doesn't point to the last slot in ownerTokens, but to the slot of the burned token (which we will update in the next line).
+                // update token to index.
                 token2Index[lastOwnerTokenId] = removeTokenIndexInOwnerTokens;
-                // Copy the current last token to the position of the token we want to burn.
-                // So the pointer updated in tokenId2Index points to the slot with the correct value.
+                // update sender token.
                 senderTokens[removeTokenIndexInOwnerTokens] = lastOwnerTokenId;
             }
             senderTokens.pop();
@@ -199,16 +191,20 @@ contract UnStZETA is
         return _isApprovedOrOwner(_spender, _tokenId);
     }
 
-    /// @notice Set the stZETA contract address.
-    /// @param _stZETA - stZETA contract address.
-    function setStZETA(address _stZETA) external override onlyOwner {
-        stZETA = _stZETA;
+    /// @notice set stZETA address.
+    /// @param _newStZETA new stZETA address.
+    function setStZETA(address _newStZETA) external override onlyOwner {
+        address oldStZETA = stZETA;
+        stZETA = _newStZETA;
+        emit SetStZETA(oldStZETA, _newStZETA);
     }
 
-    /// @notice Set the version.
-    /// @param _version - New version to be set.
-    function setVersion(string calldata _version) external override onlyOwner {
-        version = _version;
+    /// @notice set new version
+    /// @param _newVersion new version
+    function setVersion(string memory _newVersion) external override onlyOwner {
+        string memory oldVersion = version;
+        version = _newVersion;
+        emit SetVersion(oldVersion, _newVersion);
     }
 
     /// @notice Retrieve the owned token array.
@@ -232,8 +228,9 @@ contract UnStZETA is
         return address2Approved[_address];
     }
 
-    /// @notice Remove tokenId from the approved token array of a specific user.
+    /// @notice Remove approved.
     /// @param _tokenId - ID of the token to be removed.
+    /// @param _approvedAddress - Address to be removed.
     function _removeApproval(uint256 _tokenId, address _approvedAddress) internal {
         uint256[] storage approvedTokens = address2Approved[_approvedAddress];
         uint256 removeApprovedTokenIndexInOwnerTokens = tokenId2ApprovedIndex[
@@ -249,14 +246,11 @@ contract UnStZETA is
             uint256 lastApprovedTokenId = approvedTokens[
                 lastApprovedTokensIndex
             ];
-            // Make the last token have the index of the token we want to burn.
-            // So when we request the index of the token with the id of the current last token in approveTokens,
-            // it doesn't point to the last slot in approveTokens, but to the slot of the burned token (which we will update in the next line).
+            // Update the approved token index.
             tokenId2ApprovedIndex[
                 lastApprovedTokenId
             ] = removeApprovedTokenIndexInOwnerTokens;
-            // Copy the current last token to the position of the token we want to burn.
-            // So the pointer updated in tokenId2ApprovedIndex points to the slot with the correct value.
+            // Update the approved token.
             approvedTokens[
                 removeApprovedTokenIndexInOwnerTokens
             ] = lastApprovedTokenId;
@@ -281,10 +275,14 @@ contract UnStZETA is
     }
 
     /// @notice Get the version for each update.
+    /// @return version - Version.
     function getUpdateVersion() external pure override returns(string memory) {
-        return "1.0.2.7";
+        return "1.0.3";
     }
 
+    /// @notice check tokenid exists
+    /// @param tokenId token id.
+    /// @return result return result
     function exists(uint256 tokenId) public view override returns (bool) {
         return _exists(tokenId);
     }
