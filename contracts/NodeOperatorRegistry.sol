@@ -38,9 +38,9 @@ contract NodeOperatorRegistry is
 
     /// @notice Initialize NodeOperatorRegistry contract.
     function initialize(address _dao) external initializer {
-        __Pausable_init_unchained();
-        __AccessControl_init_unchained();
-        __ReentrancyGuard_init_unchained();
+        __Pausable_init();
+        __AccessControl_init();
+        __ReentrancyGuard_init();
 
         // Set roles
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -53,7 +53,7 @@ contract NodeOperatorRegistry is
         // Set addresses
         dao = _dao;
 
-        version = "1.0.3";
+        version = "1.0.5";
     }
 
     /// @notice Add new node operator to the system.  
@@ -186,7 +186,7 @@ contract NodeOperatorRegistry is
 
     /// @notice Get update version on each update
     function getUpdateVersion() external pure override returns(string memory) {
-        return "1.0.3";
+        return "1.0.5";
     }
 
     ////////////////////////////////////////////////////////////
@@ -209,6 +209,7 @@ contract NodeOperatorRegistry is
         require(_newRewardAddress != address(0), "Invalid reward address");
 
         validatorOperatorAddressToRewardAddress[operatorAddress] = _newRewardAddress;
+        require(validatorRewardAddressToOperatorAddress[_newRewardAddress] == address(0), "reward exists");
         validatorRewardAddressToOperatorAddress[_newRewardAddress] = operatorAddress;
         delete validatorRewardAddressToOperatorAddress[msg.sender];
 

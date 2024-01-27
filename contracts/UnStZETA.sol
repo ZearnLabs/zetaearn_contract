@@ -46,14 +46,13 @@ contract UnStZETA is
         __Context_init_unchained();
         __ERC165_init_unchained();
         __Ownable_init_unchained();
-        __ERC721_init_unchained(name_, symbol_);
-        __Pausable_init_unchained();
-        __ERC721Pausable_init_unchained();
+        __ERC721_init(name_, symbol_);
+        __ERC721Pausable_init();
 
         // Set stZETA contract address.
         stZETA = _stZETA;
         // Set version.
-        version = "1.0.3";
+        version = "1.0.5";
     }
 
     /// @notice mint a new NFT.
@@ -277,7 +276,7 @@ contract UnStZETA is
     /// @notice Get the version for each update.
     /// @return version - Version.
     function getUpdateVersion() external pure override returns(string memory) {
-        return "1.0.3";
+        return "1.0.5";
     }
 
     /// @notice check tokenid exists

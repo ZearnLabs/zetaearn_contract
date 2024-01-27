@@ -73,7 +73,7 @@ contract StZETA is
     uint256 private constant _ENTERED = 2;
     uint256 private _status;
 
-    // @notice Used for executing recovery once
+    // @notice Used for executing recovery once, NOT USE NOW
     bool private recovered;
 
     /// @notice Maximum submission threshold
@@ -123,9 +123,9 @@ contract StZETA is
         address _unStZETA,
         uint256 _currentEpoch
     ) external override initializer {
-        __AccessControl_init_unchained();
-        __Pausable_init_unchained();
-        __ERC20_init_unchained("Staked ZETA", "stZETA");
+        __AccessControl_init();
+        __Pausable_init();
+        __ERC20_init("Staked ZETA", "stZETA");
 
         // Set roles
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -156,7 +156,7 @@ contract StZETA is
         // Set epoch delay
         epochDelay = 5;
         // version number
-        version = "1.0.3";
+        version = "1.0.5";
     }
 
     /// @notice Check if an address has ever staked
@@ -188,6 +188,11 @@ contract StZETA is
 
         // Update totalBuffered
         totalBuffered += _amount;
+
+        // update stakers
+        if (!_stakers[msg.sender]) {
+            _stakers[msg.sender] = true;
+        }
 
         // Emit the SubmitEvent event
         emit SubmitEvent(msg.sender, _amount, balanceOf(msg.sender));
@@ -571,7 +576,6 @@ contract StZETA is
         // update stakers
         if (!_stakers[to]) {
             totalStakers += 1;
-            _stakers[to] = true;
         }
     }
 
@@ -708,7 +712,7 @@ contract StZETA is
     /// @notice Get the version of each update
     /// @return version version
     function getUpdateVersion() external pure override returns(string memory) {
-        return "1.0.3";
+        return "1.0.5";
     }
 
     /// @notice claim multi tokens

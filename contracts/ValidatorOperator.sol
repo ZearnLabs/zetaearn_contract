@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "./interfaces/IValidatorOperator.sol";
@@ -11,8 +10,7 @@ import "./interfaces/IStZETA.sol";
 contract ValidatorOperator is
     IValidatorOperator,
     PausableUpgradeable,
-    AccessControlUpgradeable,
-    ReentrancyGuardUpgradeable
+    AccessControlUpgradeable
 {
     /// @notice all roles.
     bytes32 public constant DAO_ROLE = keccak256("ZETAEARN_DAO");
@@ -112,7 +110,6 @@ contract ValidatorOperator is
     ) external override initializer {
         __Pausable_init_unchained();
         __AccessControl_init_unchained();
-        __ReentrancyGuard_init_unchained();
 
         // set role
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -135,11 +132,11 @@ contract ValidatorOperator is
         ratio = 10**10;
         status = NodeOperatorRegistryStatus.ACTIVE;
 
-        version = "1.0.3";
+        version = "1.0.5";
     }
 
     /// @notice when node quit, wait oracle process
-    function withdrawTotalDelegated() external override isNodeOperatorRegistry {
+    function withdrawTotalDelegated() external override whenNotPaused isNodeOperatorRegistry {
         // change status
         status = NodeOperatorRegistryStatus.WITHDRAWTOTAL;
 
@@ -147,7 +144,7 @@ contract ValidatorOperator is
     }
 
     /// @notice to delegate
-    function delegate() external payable override isStZETA {
+    function delegate() external payable override whenNotPaused isStZETA {
         // to delegate
         (bool success, ) = payable(rewardAddress).call{value: msg.value}("");
         // check delegate success
@@ -160,7 +157,7 @@ contract ValidatorOperator is
 
     /// @notice to claim, update validator unbond info
     /// @param claimAmount claim amount
-    function unStake(uint256 claimAmount) external override isStZETA {
+    function unStake(uint256 claimAmount) external override whenNotPaused isStZETA {
         require(claimAmount > 0, "zero amount");
         require(claimAmount <= totalStake, "exceed totalStake");
         uint256 currentEpoch = IStZETA(stZETA).currentEpoch();
@@ -215,7 +212,7 @@ contract ValidatorOperator is
 
     /// @notice get update version each time
     function getUpdateVersion() external pure override returns(string memory) {
-        return "1.0.3";
+        return "1.0.5";
     }
 
     /// @notice get finished unbond epoch amount
@@ -232,7 +229,7 @@ contract ValidatorOperator is
         address delegator_address,
         uint256 end_epoch,
         uint256 blockHeight
-    ) external payable override onlyRole(ORACLE_ROLE) {
+    ) external payable override whenNotPaused onlyRole(ORACLE_ROLE) {
         // get the unbond value
         uint256 unbondAmount = msg.value;
         // ensure the unbondAmount is not zero
@@ -255,13 +252,13 @@ contract ValidatorOperator is
     /// @notice unstake claim
     /// @param unbondNonce unbond nonce
     /// @return amount amount
-    function unstakeClaimTokens(uint256 unbondNonce) external override isStZETA returns(uint256) {
+    function unstakeClaimTokens(uint256 unbondNonce) external override whenNotPaused isStZETA returns(uint256) {
         // get user unbond info
         DelegatorUnbond memory unbond = unbonds_new[msg.sender][unbondNonce];
-        // according to unbond info to unstake claim
-        uint256 amount = _unstakeClaimTokens(unbond);
         // delete unbonds_new[msg.sender][unbondNonce];
         delete unbonds_new[msg.sender][unbondNonce];
+        // according to unbond info to unstake claim
+        uint256 amount = _unstakeClaimTokens(unbond);
 
         return amount;
     }
